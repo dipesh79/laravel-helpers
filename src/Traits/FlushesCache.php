@@ -4,7 +4,7 @@ namespace Dipesh79\LaravelHelpers\Traits;
 
 use Illuminate\Support\Facades\Cache;
 
-class FlushesCache
+trait FlushesCache
 {
     public static function bootFlushesCache(): void
     {
