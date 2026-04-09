@@ -31,19 +31,22 @@ trait Filterable
             throw new FilterableColumnsNotSpecifiedException();
         }
 
-        $query->where(function ($query) use ($filterableColumns, $filterQuery) {
+        $operator = $query->getConnection()->getDriverName() === 'pgsql' ? 'ILIKE' : 'LIKE';
+
+        $query->where(function ($query) use ($filterableColumns, $filterQuery, $operator) {
             foreach ($filterableColumns as $column) {
                 if (str_contains($column, '.')) {
                     // Handle nested relationships dynamically
                     $relations = explode('.', $column);
                     // Get the last element as the actual column
                     $finalColumn = array_pop($relations);
-                    $query->orWhereHas(implode('.', $relations), function ($q) use ($finalColumn, $filterQuery) {
-                        $q->where($finalColumn, 'LIKE', '%' . $filterQuery . '%');
-                    });
+                    $query->orWhereHas(implode('.', $relations),
+                        function ($q) use ($finalColumn, $filterQuery, $operator) {
+                            $q->where($finalColumn, $operator, '%' . $filterQuery . '%');
+                        });
                 } else {
                     // Handle direct table columns
-                    $query->orWhere($column, 'LIKE', '%' . $filterQuery . '%');
+                    $query->orWhere($column, $operator, '%' . $filterQuery . '%');
                 }
             }
         });
